@@ -3,7 +3,7 @@
   "version": "1.0.0-snapshot",
   "description": "protect all human slots with individual password and give a folder with all the passwords by coalitions",
   "scripts": {
-    "start": "node main.js $*",
+    "start": "node main.js",
     "test": "node main.js tests/test-slots.miz"
   },
   "repository": {
