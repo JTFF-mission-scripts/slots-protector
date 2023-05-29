@@ -1,0 +1,32 @@
+{
+  "name": "@jtff/slots-protector",
+  "version": "1.0.0-snapshot",
+  "description": "protect all human slots with individual password and give a folder with all the passwords by coalitions",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JTFF-mission-scripts/slots-protector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JTFF-mission-scripts/slots-protector/issues"
+  },
+  "homepage": "https://github.com/JTFF-mission-scripts/slots-protector#readme",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "jszip": "^3.10.1",
+    "lua-json": "^1.0.1",
+    "path": "^0.12.7",
+    "util": "^0.12.5"
+  },
+  "main": "main.js",
+  "keywords": [
+    "DCS",
+    "World",
+    "JTFF",
+    "DCSWorld"
+  ],
+  "author": "Sebastien LONGO",
+  "license": "GPL-3.0-or-later"
+}
