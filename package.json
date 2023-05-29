@@ -3,7 +3,7 @@
   "version": "1.0.0-snapshot",
   "description": "protect all human slots with individual password and give a folder with all the passwords by coalitions",
   "scripts": {
-    "start": "node main.js",
+    "start": "NODE_ENV=production node main.js",
     "test": "node main.js tests/test-slots.miz"
   },
   "repository": {
@@ -15,7 +15,7 @@
   },
   "homepage": "https://github.com/JTFF-mission-scripts/slots-protector#readme",
   "dependencies": {
-    "base64-js": "^1.5.1",
+    "base64url": "^3.0.1",
     "blake2": "^5.0.0",
     "fs": "^0.0.1-security",
     "jszip": "^3.10.1",
