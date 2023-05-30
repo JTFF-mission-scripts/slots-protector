@@ -6,9 +6,41 @@ const path = require("path");
 const { format, parse } = require("lua-json");
 const blake2 = require("blake2");
 const base64url = require('base64url');
-const _ = require('lodash');
 const JSZip = require("jszip");
 const slugify = require('slugify');
+const { isArray, isEmpty, isObject, isString, isNumber, map, range } = require('lodash');
+
+const js2Lua = (data, depth = 0) => {
+    const indentation = range(0, depth + 1)
+        .map(() => "")
+        .join("    ");
+
+    if (isArray(data)) {
+        if (isEmpty(data)) {
+            return `\n${indentation}{\n${indentation}}`;
+        }
+        return `\n${indentation}{\n${data
+            .map((it, idx) => `${indentation}    [${idx + 1}] = ${js2Lua(it, depth + 1)}`)
+            .join(",\n")},\n${indentation}}`;
+    }
+
+    if (isObject(data)) {
+        if (isEmpty(data)) {
+            return `\n${indentation}{\n${indentation}}`;
+        }
+        return `\n${indentation}{\n${map(
+            data,
+            (value, key) =>
+                `${indentation}    [${js2Lua(key)}] = ${js2Lua(value, depth + 1)}`,
+        ).join(",\n")},\n${indentation}}`;
+    }
+
+    if (isString(data)) {
+        return JSON.stringify(data);
+    }
+
+    return `${data}`;
+};
 
 if (process.env.NODE_ENV === "production") {
     console.debug = () => { };
@@ -65,7 +97,10 @@ fs.rmSync("./out", {recursive: true, force: true});
 fs.mkdirSync("./out/coalitions", {recursive: true});
 fs.copyFileSync(inputMizPath,outputMizPath);
 mizOpen(outputMizPath).then(mizData => {
-    console.debug("mission loaded");
+    console.debug("miz File loaded");
+    mizData.files["mission"].async('nodebuffer').then(content => {
+        fs.writeFileSync("./out/mission-orig.lua", content);
+    });
     getMissionObjectFromZip(mizData).then(missionObject => {
         mizData.remove("mission");
         Object.keys(missionObject.coalition).forEach(function(coalitionKey, coalitionIndex, coalitionArray) {
@@ -94,13 +129,7 @@ mizOpen(outputMizPath).then(mizData => {
                 }
             });
         });
-        let missionLuaT = format(missionObject, { singleQuote: false })
-        missionLuaT = missionLuaT
-            .split('\n')
-            .slice(1, -1)
-            .join('\n')
-            .slice(0, -1)
-            .replace(/\[\"(\d+)\"\] = /g, "[$1] = ");
+        const missionLuaT = "mission = " + js2Lua(missionObject);
         mizData.file("mission", missionLuaT);
         mizData.generateAsync({
             type: 'nodebuffer',
@@ -109,8 +138,12 @@ mizOpen(outputMizPath).then(mizData => {
             compressionOptions: {
                 level: 9
             }
-        }).then(inputZip => {
-            fs.writeFileSync(outputMizPath, inputZip);
+        }).then(zipData => {
+            fs.writeFileSync(outputMizPath, zipData);
+            mizData.files["mission"].async('nodebuffer').then(content => {
+                fs.writeFileSync("./out/mission-modified.lua", content);
+            });
+
         });
     });
 })
