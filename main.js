@@ -31,8 +31,8 @@ const js2Lua = (data, depth = 0) => {
         return `\n${indentation}{\n${map(
             data,
             (value, key) =>
-                `${indentation}    [${!isNaN(key)?key:js2Lua(key)}] = ${js2Lua(value, depth + 1)}`,
-        ).join(",\n")},\n${indentation}}`;
+                `${indentation}    [${!isNaN(key)?key:js2Lua(key)}] = ${js2Lua(value, depth + 1)}${isObject(value)?`, -- end of [${!isNaN(key)?key:js2Lua(key)}]`:","}`,
+        ).join("\n")}\n${indentation}}`;
     }
 
     if (isString(data)) {
@@ -73,6 +73,7 @@ function generateGroupInfo(groupObject, credentialObject) {
         groupId: groupObject.groupId,
         force: Object.keys(groupObject.units).length,
         unitIds: Object.values(groupObject.units).map(x => x.unitId),
+        tailNumbers: Object.values(groupObject.units).map(x => x.onboard_num),
         model: groupObject.units["1"].type,
         password: credentialObject.clear
     };
@@ -104,11 +105,11 @@ mizOpen(outputMizPath).then(mizData => {
     getMissionObjectFromZip(mizData).then(missionObject => {
         mizData.remove("mission");
         Object.keys(missionObject.coalition).forEach(function(coalitionKey, coalitionIndex, coalitionArray) {
-            fs.mkdirSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name);
             console.debug("coalitions : name = " + missionObject.coalition[coalitionKey].name);
             Object.keys(missionObject.coalition[coalitionKey].country).forEach(function(contryKey, countryIndex, countryArray) {
                 console.debug("country : name = " + missionObject.coalition[coalitionKey].country[contryKey].name);
                 if (Object.hasOwn(missionObject.coalition[coalitionKey].country[contryKey], 'plane')) {
+                    fs.mkdirSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name + "/airplanes", {recursive: true});
                     Object.keys(missionObject.coalition[coalitionKey].country[contryKey].plane.group).forEach(function(groupKey, index, array) {
                         const groupObject = missionObject.coalition[coalitionKey].country[contryKey].plane.group[groupKey];
                         console.debug("Plane group : name = " + missionObject.coalition[coalitionKey].country[contryKey].plane.group[groupKey].name);
@@ -116,11 +117,31 @@ mizOpen(outputMizPath).then(mizData => {
                         if (typeof listSkills !== 'undefined' && listSkills) {
                             if (!(Object.hasOwn(groupObject, 'password'))) {
                                 const passwordObject = generatePassword(20);
-                                fs.writeFileSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name + "/" + slugify(groupObject.name) + "-info.json", JSON.stringify(generateGroupInfo(groupObject, passwordObject), null, "  "));
+                                fs.writeFileSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name + "/airplanes/" + slugify(groupObject.name) + "-info.json", JSON.stringify(generateGroupInfo(groupObject, passwordObject), null, "  "));
                                 console.debug("group: " + groupObject.name);
                                 console.debug("generate Password = " + passwordObject.clear);
                                 console.debug("generate hash = " + passwordObject.hash);
                                 missionObject.coalition[coalitionKey].country[contryKey].plane.group[groupKey].password=passwordObject.hash;
+                            }
+                        } else {
+                            console.debug("not Human slot");
+                        }
+                    });
+                }
+                if (Object.hasOwn(missionObject.coalition[coalitionKey].country[contryKey], 'helicopter')) {
+                    fs.mkdirSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name + "/helicopters", {recursive: true});
+                    Object.keys(missionObject.coalition[coalitionKey].country[contryKey].helicopter.group).forEach(function(groupKey, index, array) {
+                        const groupObject = missionObject.coalition[coalitionKey].country[contryKey].helicopter.group[groupKey];
+                        console.debug("helicopter group : name = " + missionObject.coalition[coalitionKey].country[contryKey].helicopter.group[groupKey].name);
+                        const listSkills = Object.values(missionObject.coalition[coalitionKey].country[contryKey].helicopter.group[groupKey].units).map(x => x.skill).find(element => element === "Client");
+                        if (typeof listSkills !== 'undefined' && listSkills) {
+                            if (!(Object.hasOwn(groupObject, 'password'))) {
+                                const passwordObject = generatePassword(20);
+                                fs.writeFileSync("./out/coalitions/" + missionObject.coalition[coalitionKey].name + "/helicopters/" + slugify(groupObject.name) + "-info.json", JSON.stringify(generateGroupInfo(groupObject, passwordObject), null, "  "));
+                                console.debug("group: " + groupObject.name);
+                                console.debug("generate Password = " + passwordObject.clear);
+                                console.debug("generate hash = " + passwordObject.hash);
+                                missionObject.coalition[coalitionKey].country[contryKey].helicopter.group[groupKey].password=passwordObject.hash;
                             }
                         } else {
                             console.debug("not Human slot");
