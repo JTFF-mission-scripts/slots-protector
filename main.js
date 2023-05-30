@@ -31,7 +31,7 @@ const js2Lua = (data, depth = 0) => {
         return `\n${indentation}{\n${map(
             data,
             (value, key) =>
-                `${indentation}    [${js2Lua(key)}] = ${js2Lua(value, depth + 1)}`,
+                `${indentation}    [${!isNaN(key)?key:js2Lua(key)}] = ${js2Lua(value, depth + 1)}`,
         ).join(",\n")},\n${indentation}}`;
     }
 
